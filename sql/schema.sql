@@ -2,7 +2,7 @@
 CREATE TABLE vault (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     salt VARCHAR(24) NOT NULL, -- base64(16 bytes) = 24 bytes
-    created_at TIMESTAMP DEFAULT NOW(),
+    created_at TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE vault_entry (
@@ -18,5 +18,5 @@ CREATE TABLE vault_entry (
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP,
 
-    vault_id UUID NOT NULL REFERENCES vault(id) ON DELETE CASCADE,
+    vault_id UUID NOT NULL REFERENCES vault(id) ON DELETE CASCADE
 );

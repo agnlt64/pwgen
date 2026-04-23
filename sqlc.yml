@@ -1,0 +1,29 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "sql/query.sql"
+    schema: "sql/schema.sql"
+    gen:
+      go:
+        package: "db"
+        out: "internal/db"
+        sql_package: "pgx/v5"
+        overrides:
+          - db_type: "pg_catalog.int4"
+            go_type: "int32"
+            nullable: true
+          - db_type: "pg_catalog.int8"
+            go_type: "int64"
+            nullable: true
+          - db_type: "pg_catalog.text"
+            go_type: "string"
+            nullable: true
+          - db_type: "pg_catalog.text"
+            go_type: "string"
+            nullable: false
+          - db_type: "pg_catalog.varchar"
+            go_type: "string"
+            nullable: true
+          - db_type: "pg_catalog.varchar"
+            go_type: "string"
+            nullable: false

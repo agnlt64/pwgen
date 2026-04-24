@@ -12,7 +12,7 @@ import (
 )
 
 const getAllVaults = `-- name: GetAllVaults :many
-select id, salt, created_at
+select id, display_name, salt, created_at
 from vault
 `
 
@@ -25,7 +25,12 @@ func (q *Queries) GetAllVaults(ctx context.Context) ([]Vault, error) {
 	var items []Vault
 	for rows.Next() {
 		var i Vault
-		if err := rows.Scan(&i.ID, &i.Salt, &i.CreatedAt); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.DisplayName,
+			&i.Salt,
+			&i.CreatedAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -58,16 +63,57 @@ func (q *Queries) GetEntryByWebsite(ctx context.Context, website string) (VaultE
 	return i, err
 }
 
-const insertVault = `-- name: InsertVault :one
-insert into vault (salt)
-values ($1)
-returning id, salt, created_at
+const getVaultByName = `-- name: GetVaultByName :one
+select id, display_name, salt, created_at
+from vault
+where display_name = $1
 `
 
-func (q *Queries) InsertVault(ctx context.Context, salt string) (Vault, error) {
-	row := q.db.QueryRow(ctx, insertVault, salt)
+func (q *Queries) GetVaultByName(ctx context.Context, displayName string) (Vault, error) {
+	row := q.db.QueryRow(ctx, getVaultByName, displayName)
 	var i Vault
-	err := row.Scan(&i.ID, &i.Salt, &i.CreatedAt)
+	err := row.Scan(
+		&i.ID,
+		&i.DisplayName,
+		&i.Salt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const insertCurrentVault = `-- name: InsertCurrentVault :one
+insert into current_vault (current_vault_id)
+values ($1)
+returning id, current_vault_id
+`
+
+func (q *Queries) InsertCurrentVault(ctx context.Context, currentVaultID pgtype.UUID) (CurrentVault, error) {
+	row := q.db.QueryRow(ctx, insertCurrentVault, currentVaultID)
+	var i CurrentVault
+	err := row.Scan(&i.ID, &i.CurrentVaultID)
+	return i, err
+}
+
+const insertVault = `-- name: InsertVault :one
+insert into vault (display_name, salt)
+values ($1, $2)
+returning id, display_name, salt, created_at
+`
+
+type InsertVaultParams struct {
+	DisplayName string
+	Salt        string
+}
+
+func (q *Queries) InsertVault(ctx context.Context, arg InsertVaultParams) (Vault, error) {
+	row := q.db.QueryRow(ctx, insertVault, arg.DisplayName, arg.Salt)
+	var i Vault
+	err := row.Scan(
+		&i.ID,
+		&i.DisplayName,
+		&i.Salt,
+		&i.CreatedAt,
+	)
 	return i, err
 }
 
@@ -104,5 +150,18 @@ func (q *Queries) InsertVaultEntry(ctx context.Context, arg InsertVaultEntryPara
 		&i.UpdatedAt,
 		&i.VaultID,
 	)
+	return i, err
+}
+
+const updateCurrentVault = `-- name: UpdateCurrentVault :one
+update current_vault
+set current_vault_id = $1
+returning id, current_vault_id
+`
+
+func (q *Queries) UpdateCurrentVault(ctx context.Context, currentVaultID pgtype.UUID) (CurrentVault, error) {
+	row := q.db.QueryRow(ctx, updateCurrentVault, currentVaultID)
+	var i CurrentVault
+	err := row.Scan(&i.ID, &i.CurrentVaultID)
 	return i, err
 }

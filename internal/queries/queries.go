@@ -37,13 +37,16 @@ func (q *Queries) GetEntryByWebsite(ctx context.Context, website string) (db.Vau
 	return entry, nil
 }
 
-func (q *Queries) InsertVault(ctx context.Context, salt string) error {
-	_, err := q.db.InsertVault(ctx, salt)
+func (q *Queries) InsertVault(ctx context.Context, name, salt string) (db.Vault, error) {
+	vault, err := q.db.InsertVault(ctx, db.InsertVaultParams{
+		DisplayName: name,
+		Salt: salt,
+	})
 	if err != nil {
 		fmt.Printf("%s\n", err.Error())
-		return fmt.Errorf("could not save vault")
+		return db.Vault{}, fmt.Errorf("could not save vault")
 	}
-	return nil
+	return vault, nil
 }
 
 func (q *Queries) InsertVaultEntry(ctx context.Context, ciphertext, nonce, website, label string, vaultId pgtype.UUID) (db.VaultEntry, error) {
@@ -59,4 +62,21 @@ func (q *Queries) InsertVaultEntry(ctx context.Context, ciphertext, nonce, websi
 		return db.VaultEntry{}, fmt.Errorf("could not inser vault entry")
 	}
 	return entry, nil
+}
+
+func (q *Queries) InsertCurrentVault(ctx context.Context, currentVaultID pgtype.UUID) (db.CurrentVault, error) {
+	currentVault, err := q.db.InsertCurrentVault(ctx, currentVaultID)
+	if err != nil {
+		fmt.Printf("%s\n", err.Error())
+		return db.CurrentVault{}, fmt.Errorf("could not insert current vault")
+	}
+	return currentVault, nil
+}
+
+func (q *Queries) UpdateCurrentVault(ctx context.Context, currentVaultID pgtype.UUID) (db.CurrentVault, error) {
+	currentVault, err := q.db.UpdateCurrentVault(ctx, currentVaultID)
+	if err != nil {
+		return db.CurrentVault{}, fmt.Errorf("could not update current vault")
+	}
+	return currentVault, nil
 }

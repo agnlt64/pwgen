@@ -8,10 +8,16 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type CurrentVault struct {
+	ID             pgtype.UUID
+	CurrentVaultID pgtype.UUID
+}
+
 type Vault struct {
-	ID        pgtype.UUID
-	Salt      string
-	CreatedAt pgtype.Timestamp
+	ID          pgtype.UUID
+	DisplayName string
+	Salt        string
+	CreatedAt   pgtype.Timestamp
 }
 
 type VaultEntry struct {

@@ -31,11 +31,11 @@ func check(err error) {
 func Usage() {
 	// TODO: move to actual subcommands, e.g
 	// vault [new|list|use]
-	// vault new [name], vault use [uuid|name], vault list
+	// vault new [name], vault use [name], vault list
 	fmt.Println("Usage:")
-	fmt.Println("    new-vault [NAME] - Create a new vault (only one vault allowed ATM, add NAME field to DB)")
-	fmt.Println("    list-vaults - List all vaults (TODO)")
-	fmt.Println("    use-vault [NAME|ID] - Use a specific vault (TODO)")
+	fmt.Println("    new-vault [NAME] - Create a new vault")
+	fmt.Println("    use-vault [NAME] - Use a specific vault (TODO)")
+	fmt.Println("    list-vaults      - List all vaults")
 	fmt.Println("")
 	fmt.Println("    new-pass [WEBSITE] - Create a new password (TODO: support website)")
 	fmt.Println("    get-pass [WEBSITE] - Get the password for given WEBSITE (TODO: support website)")
@@ -44,18 +44,33 @@ func Usage() {
 }
 
 func (c *Commands) NewVault() {
+	if len(c.args) != 1 {
+		log.Fatal("Error: new-vault command expects a vault name")
+	}
+
+	ctx := context.Background()
+	salt := utils.RandString(utils.SALT_LEN)
+	displayName := c.args[0]
+	vault, err := c.queries.InsertVault(ctx, displayName, salt)
+	check(err)
+
+	_, err = c.queries.UpdateCurrentVault(ctx, vault.ID)
+	if err != nil {
+		// if we're here, current_vault table is empty, so create it
+		_, err = c.queries.InsertCurrentVault(ctx, vault.ID)
+		check(err)
+	}
+	fmt.Printf("Vault %s created successfully! Using it as default vault.\n", displayName)
+}
+
+func (c *Commands) ListVaults() {
 	ctx := context.Background()
 	vaults, err := c.queries.GetAllVaults(ctx)
 	check(err)
 
-	// todo: this is obviously very dumb
-	if len(vaults) >= 1 {
-		log.Fatal("a vault already exists")
+	for idx, vault := range vaults {
+		fmt.Printf("[%d] %s\n", idx, vault.ID) // todo: use display_name
 	}
-
-	salt := utils.RandString(16)
-	err = c.queries.InsertVault(ctx, salt)
-	check(err)
 }
 
 func (c *Commands) NewPass() {

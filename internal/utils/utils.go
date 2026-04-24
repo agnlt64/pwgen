@@ -17,6 +17,7 @@ var PRINTABLE = []rune("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRST
 
 const (
 	MAX_CPU = 8
+	SALT_LEN = 16
 )
 
 func GetMasterPassword() string {

@@ -1,8 +1,14 @@
 
 CREATE TABLE vault (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    display_name VARCHAR(255) NOT NULL,
     salt VARCHAR(24) NOT NULL, -- base64(16 bytes) = 24 bytes
     created_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE current_vault (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    current_vault_id UUID NOT NULL REFERENCES vault(id)
 );
 
 CREATE TABLE vault_entry (
@@ -12,7 +18,7 @@ CREATE TABLE vault_entry (
     
     -- user fields
     website VARCHAR(255) NOT NULL,
-    label VARCHAR(255),
+    label VARCHAR(255) NOT NULL,
     
     -- audit
     created_at TIMESTAMP DEFAULT NOW(),

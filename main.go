@@ -41,12 +41,14 @@ func main() {
 	dbURL    := os.Getenv("DB_URL")
 	pool     := connect(context.Background(), dbURL)
 	queries  := queries.NewQueries(pool)
-	commands := c.NewCommands(queries, os.Args[1:])
+	commands := c.NewCommands(queries, os.Args[2:])
 
 	subCmd := os.Args[1]
 	switch subCmd {
 	case "new-vault":
 		commands.NewVault()
+	case "list-vaults":
+		commands.ListVaults()
 	case "new-pass":
 		commands.NewPass()
 	case "get-pass":

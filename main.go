@@ -11,7 +11,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-
 func connect(ctx context.Context, dbURL string) *pgxpool.Pool {
 	pool, err := pgxpool.New(ctx, dbURL)
 

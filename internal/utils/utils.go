@@ -2,11 +2,14 @@ package utils
 
 import (
 	"bufio"
-	"log"
-	"fmt"
-	"os"
-	"math/big"
 	"crypto/rand"
+	"encoding/base64"
+	"fmt"
+	"log"
+	"math/big"
+	"os"
+
+	"golang.org/x/crypto/argon2"
 )
 
 // from Python's string.printable
@@ -35,4 +38,21 @@ func RandString(size int) string {
 		b[i] = PRINTABLE[idx.Int64()]
 	}
 	return string(b)
+}
+
+func Argon2id(password, salt string) []byte {
+	key := argon2.Key([]byte(password), []byte(salt), 3, 32*1024, MAX_CPU, 32)
+	return key
+}
+
+func EncodeB64(text []byte) string {
+	return base64.StdEncoding.EncodeToString(text)
+}
+
+func DecodeB64(text string) []byte {
+	val, err := base64.StdEncoding.DecodeString(text)
+	if err != nil {
+		log.Fatal("could not decode base64 string")
+	}
+	return val
 }

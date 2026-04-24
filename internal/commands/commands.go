@@ -12,11 +12,13 @@ import (
 
 type Commands struct {
 	queries *queries.Queries
+	args 	[]string
 }
 
-func NewCommands(queries *queries.Queries) *Commands {
+func NewCommands(queries *queries.Queries, args []string) *Commands {
 	return &Commands{
 		queries: queries,
+		args: args,
 	}
 }
 
@@ -24,6 +26,21 @@ func check(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func Usage() {
+	// TODO: move to actual subcommands, e.g
+	// vault [new|list|use]
+	// vault new [name], vault use [uuid|name], vault list
+	fmt.Println("Usage:")
+	fmt.Println("    new-vault [NAME] - Create a new vault (only one vault allowed ATM, add NAME field to DB)")
+	fmt.Println("    list-vaults - List all vaults (TODO)")
+	fmt.Println("    use-vault [NAME|ID] - Use a specific vault (TODO)")
+	fmt.Println("")
+	fmt.Println("    new-pass [WEBSITE] - Create a new password (TODO: support website)")
+	fmt.Println("    get-pass [WEBSITE] - Get the password for given WEBSITE (TODO: support website)")
+	fmt.Println("")
+	fmt.Println("    help - Print this help message")
 }
 
 func (c *Commands) NewVault() {

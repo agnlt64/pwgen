@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
-	"pwgen/internal/commands"
+	c "pwgen/internal/commands"
 	"pwgen/internal/queries"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -32,13 +33,15 @@ func main() {
 	}
 
 	if len(os.Args) < 2 {
-		log.Fatal("not enough args")
+		fmt.Println("Not enough arguments. See usage below.")
+		c.Usage()
+		os.Exit(1)
 	}
 
 	dbURL    := os.Getenv("DB_URL")
 	pool     := connect(context.Background(), dbURL)
 	queries  := queries.NewQueries(pool)
-	commands := commands.NewCommands(queries)
+	commands := c.NewCommands(queries, os.Args[1:])
 
 	subCmd := os.Args[1]
 	switch subCmd {
@@ -48,8 +51,11 @@ func main() {
 		commands.NewPass()
 	case "get-pass":
 		commands.GetPass()
-	// todo: help subcommand
+	case "help":
+		c.Usage()
 	default:
-		log.Fatalf("%s is not a valid subcommand", subCmd)
+		fmt.Printf("%s is not a valid command. See usage below.\n", subCmd)
+		c.Usage()
+		os.Exit(1)
 	}
 }

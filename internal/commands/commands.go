@@ -34,7 +34,7 @@ func Usage() {
 	// vault new [name], vault use [name], vault list
 	fmt.Println("Usage:")
 	fmt.Println("    new-vault [NAME] - Create a new vault")
-	fmt.Println("    use-vault [NAME] - Use a specific vault (TODO)")
+	fmt.Println("    use-vault [NAME] - Use a specific vault")
 	fmt.Println("    list-vaults      - List all vaults")
 	fmt.Println("")
 	fmt.Println("    new-pass [WEBSITE] - Create a new password (TODO: support website)")
@@ -63,13 +63,35 @@ func (c *Commands) NewVault() {
 	fmt.Printf("Vault %s created successfully! Using it as default vault.\n", displayName)
 }
 
+func (c *Commands) UseVault() {
+	if len(c.args) != 1 {
+		log.Fatal("Error: use-vault command expects a vault name")
+	}
+
+	ctx := context.Background()
+	name := c.args[0]
+	vault, err := c.queries.GetVaultByName(ctx, name)
+	check(err)
+
+	_, err = c.queries.UpdateCurrentVault(ctx, vault.ID)
+	check(err)
+	fmt.Printf("Using vault %s as default vault.\n", vault.DisplayName)
+}
+
 func (c *Commands) ListVaults() {
 	ctx := context.Background()
 	vaults, err := c.queries.GetAllVaults(ctx)
 	check(err)
 
+	currentVault, err := c.queries.GetCurrentVault(ctx)
+	check(err)
+
 	for idx, vault := range vaults {
-		fmt.Printf("[%d] %s\n", idx, vault.ID) // todo: use display_name
+		if currentVault.CurrentVaultID == vault.ID {
+			fmt.Printf("[%d] %s\n", idx, vault.DisplayName)
+		} else {
+			fmt.Printf(" %d  %s\n", idx, vault.DisplayName)
+		}
 	}
 }
 

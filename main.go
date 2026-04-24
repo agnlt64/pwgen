@@ -49,6 +49,8 @@ func main() {
 		commands.NewVault()
 	case "list-vaults":
 		commands.ListVaults()
+	case "use-vault":
+		commands.UseVault()
 	case "new-pass":
 		commands.NewPass()
 	case "get-pass":

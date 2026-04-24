@@ -22,6 +22,11 @@ insert into vault_entry (ciphertext, nonce, website, label, vault_id)
 values ($1, $2, $3, $4, $5)
 returning *;
 
+-- name: GetCurrentVault :one
+select *
+from current_vault
+limit 1;
+
 -- name: InsertCurrentVault :one
 insert into current_vault (current_vault_id)
 values ($1)

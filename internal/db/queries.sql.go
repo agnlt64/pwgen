@@ -41,6 +41,19 @@ func (q *Queries) GetAllVaults(ctx context.Context) ([]Vault, error) {
 	return items, nil
 }
 
+const getCurrentVault = `-- name: GetCurrentVault :one
+select id, current_vault_id
+from current_vault
+limit 1
+`
+
+func (q *Queries) GetCurrentVault(ctx context.Context) (CurrentVault, error) {
+	row := q.db.QueryRow(ctx, getCurrentVault)
+	var i CurrentVault
+	err := row.Scan(&i.ID, &i.CurrentVaultID)
+	return i, err
+}
+
 const getEntryByWebsite = `-- name: GetEntryByWebsite :one
 select id, ciphertext, nonce, website, label, created_at, updated_at, vault_id
 from vault_entry

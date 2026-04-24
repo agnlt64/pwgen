@@ -28,6 +28,22 @@ func (q *Queries) GetAllVaults(ctx context.Context) ([]db.Vault, error) {
 	return vaults, nil
 }
 
+func (q *Queries) GetCurrentVault(ctx context.Context) (db.CurrentVault, error) {
+	vault, err := q.db.GetCurrentVault(ctx)
+	if err != nil {
+		return db.CurrentVault{}, fmt.Errorf("could not get current vault")
+	}
+	return vault, nil
+}
+
+func (q *Queries) GetVaultByName(ctx context.Context, name string) (db.Vault, error) {
+	vault, err := q.db.GetVaultByName(ctx, name)
+	if err != nil {
+		return db.Vault{}, fmt.Errorf("could not get vault")
+	}
+	return vault, nil
+}
+
 func (q *Queries) GetEntryByWebsite(ctx context.Context, website string) (db.VaultEntry, error) {
 	entry, err := q.db.GetEntryByWebsite(ctx, website)
 	if err != nil {

@@ -8,7 +8,7 @@ CREATE TABLE vault (
 
 CREATE TABLE current_vault (
     singleton BOOLEAN PRIMARY KEY DEFAULT TRUE,
-    current_vault_id UUID NOT NULL REFERENCES vault(id)
+    current_vault_id UUID NOT NULL REFERENCES vault(id),
     CONSTRAINT singleton_check CHECK (singleton = TRUE)
 );
 

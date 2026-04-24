@@ -84,9 +84,9 @@ func (c *Commands) ListVaults() {
 
 	for idx, vault := range vaults {
 		if currentVault.CurrentVaultID == vault.ID {
-			fmt.Printf("[%d] %s\n", idx, vault.DisplayName)
+			fmt.Printf("[%d] %s\n", idx+1, vault.DisplayName)
 		} else {
-			fmt.Printf(" %d  %s\n", idx, vault.DisplayName)
+			fmt.Printf(" %d  %s\n", idx+1, vault.DisplayName)
 		}
 	}
 }

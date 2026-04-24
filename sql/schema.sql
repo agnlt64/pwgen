@@ -7,8 +7,9 @@ CREATE TABLE vault (
 );
 
 CREATE TABLE current_vault (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    singleton BOOLEAN PRIMARY KEY DEFAULT TRUE,
     current_vault_id UUID NOT NULL REFERENCES vault(id)
+    CONSTRAINT singleton_check CHECK (singleton = TRUE)
 );
 
 CREATE TABLE vault_entry (

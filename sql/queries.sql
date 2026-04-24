@@ -30,9 +30,6 @@ limit 1;
 -- name: InsertCurrentVault :one
 insert into current_vault (current_vault_id)
 values ($1)
-returning *;
-
--- name: UpdateCurrentVault :one
-update current_vault
-set current_vault_id = $1
+on conflict (singleton) do update set
+current_vault_id = $1
 returning *;

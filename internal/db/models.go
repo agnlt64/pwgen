@@ -9,7 +9,7 @@ import (
 )
 
 type CurrentVault struct {
-	ID             pgtype.UUID
+	Singleton      bool
 	CurrentVaultID pgtype.UUID
 }
 

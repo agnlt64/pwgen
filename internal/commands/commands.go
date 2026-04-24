@@ -54,12 +54,8 @@ func (c *Commands) NewVault() {
 	vault, err := c.queries.InsertVault(ctx, displayName, salt)
 	check(err)
 
-	_, err = c.queries.UpdateCurrentVault(ctx, vault.ID)
-	if err != nil {
-		// if we're here, current_vault table is empty, so create it
-		_, err = c.queries.InsertCurrentVault(ctx, vault.ID)
-		check(err)
-	}
+	_, err = c.queries.InsertCurrentVault(ctx, vault.ID)
+	check(err)
 	fmt.Printf("Vault %s created successfully! Using it as default vault.\n", displayName)
 }
 
@@ -73,7 +69,7 @@ func (c *Commands) UseVault() {
 	vault, err := c.queries.GetVaultByName(ctx, name)
 	check(err)
 
-	_, err = c.queries.UpdateCurrentVault(ctx, vault.ID)
+	_, err = c.queries.InsertCurrentVault(ctx, vault.ID)
 	check(err)
 	fmt.Printf("Using vault %s as default vault.\n", vault.DisplayName)
 }

@@ -88,11 +88,3 @@ func (q *Queries) InsertCurrentVault(ctx context.Context, currentVaultID pgtype.
 	}
 	return currentVault, nil
 }
-
-func (q *Queries) UpdateCurrentVault(ctx context.Context, currentVaultID pgtype.UUID) (db.CurrentVault, error) {
-	currentVault, err := q.db.UpdateCurrentVault(ctx, currentVaultID)
-	if err != nil {
-		return db.CurrentVault{}, fmt.Errorf("could not update current vault")
-	}
-	return currentVault, nil
-}

@@ -42,7 +42,7 @@ func (q *Queries) GetAllVaults(ctx context.Context) ([]Vault, error) {
 }
 
 const getCurrentVault = `-- name: GetCurrentVault :one
-select id, current_vault_id
+select singleton, current_vault_id
 from current_vault
 limit 1
 `
@@ -50,7 +50,7 @@ limit 1
 func (q *Queries) GetCurrentVault(ctx context.Context) (CurrentVault, error) {
 	row := q.db.QueryRow(ctx, getCurrentVault)
 	var i CurrentVault
-	err := row.Scan(&i.ID, &i.CurrentVaultID)
+	err := row.Scan(&i.Singleton, &i.CurrentVaultID)
 	return i, err
 }
 
@@ -97,13 +97,15 @@ func (q *Queries) GetVaultByName(ctx context.Context, displayName string) (Vault
 const insertCurrentVault = `-- name: InsertCurrentVault :one
 insert into current_vault (current_vault_id)
 values ($1)
-returning id, current_vault_id
+on conflict (singleton) do update set
+current_vault_id = $1
+returning singleton, current_vault_id
 `
 
 func (q *Queries) InsertCurrentVault(ctx context.Context, currentVaultID pgtype.UUID) (CurrentVault, error) {
 	row := q.db.QueryRow(ctx, insertCurrentVault, currentVaultID)
 	var i CurrentVault
-	err := row.Scan(&i.ID, &i.CurrentVaultID)
+	err := row.Scan(&i.Singleton, &i.CurrentVaultID)
 	return i, err
 }
 
@@ -163,18 +165,5 @@ func (q *Queries) InsertVaultEntry(ctx context.Context, arg InsertVaultEntryPara
 		&i.UpdatedAt,
 		&i.VaultID,
 	)
-	return i, err
-}
-
-const updateCurrentVault = `-- name: UpdateCurrentVault :one
-update current_vault
-set current_vault_id = $1
-returning id, current_vault_id
-`
-
-func (q *Queries) UpdateCurrentVault(ctx context.Context, currentVaultID pgtype.UUID) (CurrentVault, error) {
-	row := q.db.QueryRow(ctx, updateCurrentVault, currentVaultID)
-	var i CurrentVault
-	err := row.Scan(&i.ID, &i.CurrentVaultID)
 	return i, err
 }

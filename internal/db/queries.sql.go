@@ -54,14 +54,20 @@ func (q *Queries) GetCurrentVault(ctx context.Context) (CurrentVault, error) {
 	return i, err
 }
 
-const getEntryByWebsite = `-- name: GetEntryByWebsite :one
+const getEntryByLabel = `-- name: GetEntryByLabel :one
 select id, ciphertext, nonce, website, label, created_at, updated_at, vault_id
 from vault_entry
-where website = $1
+where label = $1
+and vault_id = $2
 `
 
-func (q *Queries) GetEntryByWebsite(ctx context.Context, website string) (VaultEntry, error) {
-	row := q.db.QueryRow(ctx, getEntryByWebsite, website)
+type GetEntryByLabelParams struct {
+	Label   string
+	VaultID pgtype.UUID
+}
+
+func (q *Queries) GetEntryByLabel(ctx context.Context, arg GetEntryByLabelParams) (VaultEntry, error) {
+	row := q.db.QueryRow(ctx, getEntryByLabel, arg.Label, arg.VaultID)
 	var i VaultEntry
 	err := row.Scan(
 		&i.ID,

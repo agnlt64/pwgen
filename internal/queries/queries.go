@@ -31,6 +31,7 @@ func (q *Queries) GetAllVaults(ctx context.Context) ([]db.Vault, error) {
 func (q *Queries) GetCurrentVault(ctx context.Context) (db.CurrentVault, error) {
 	vault, err := q.db.GetCurrentVault(ctx)
 	if err != nil {
+		fmt.Printf("%s\n", err.Error())
 		return db.CurrentVault{}, fmt.Errorf("could not get current vault")
 	}
 	return vault, nil
@@ -39,6 +40,7 @@ func (q *Queries) GetCurrentVault(ctx context.Context) (db.CurrentVault, error) 
 func (q *Queries) GetVaultByName(ctx context.Context, name string) (db.Vault, error) {
 	vault, err := q.db.GetVaultByName(ctx, name)
 	if err != nil {
+		fmt.Printf("%s\n", err.Error())
 		return db.Vault{}, fmt.Errorf("could not get vault by name")
 	}
 	return vault, nil
@@ -47,17 +49,20 @@ func (q *Queries) GetVaultByName(ctx context.Context, name string) (db.Vault, er
 func (q *Queries) GetVaultById(ctx context.Context, id pgtype.UUID) (db.Vault, error) {
 	vault, err := q.db.GetVaultById(ctx, id)
 	if err != nil {
+		fmt.Printf("%s\n", err.Error())
 		return db.Vault{}, fmt.Errorf("could not get vault by id")
 	}
 	return vault, nil
 }
 
-
-func (q *Queries) GetEntryByWebsite(ctx context.Context, website string) (db.VaultEntry, error) {
-	entry, err := q.db.GetEntryByWebsite(ctx, website)
+func (q *Queries) GetEntryByLabel(ctx context.Context, label string, vaultId pgtype.UUID) (db.VaultEntry, error) {
+	entry, err := q.db.GetEntryByLabel(ctx, db.GetEntryByLabelParams{
+		Label: label,
+		VaultID: vaultId,
+	})
 	if err != nil {
-		fmt.Printf("%s", err.Error())
-		return db.VaultEntry{}, nil
+		fmt.Printf("%s\n", err.Error())
+		return db.VaultEntry{}, fmt.Errorf("could not get entry by label")
 	}
 	return entry, nil
 }

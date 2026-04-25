@@ -17,10 +17,11 @@ insert into vault (display_name, salt)
 values ($1, $2)
 returning *;
 
--- name: GetEntryByWebsite :one
+-- name: GetEntryByLabel :one
 select *
 from vault_entry
-where website = $1;
+where label = $1
+and vault_id = $2;
 
 -- name: InsertVaultEntry :one
 insert into vault_entry (ciphertext, nonce, website, label, vault_id)

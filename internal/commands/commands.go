@@ -126,18 +126,20 @@ func (c *Commands) NewPass() {
 }
 
 func (c *Commands) GetPass() {
+	if len(c.args) != 1 {
+		log.Fatalln("Error: get-pass command expects exactly 1 argument: WEBSITE_LABEL")
+	}
 	ctx := context.Background()
-	vaults, err := c.queries.GetAllVaults(ctx)
+	currentVault, err := c.queries.GetCurrentVault(ctx)
 	check(err)
 
-	if len(vaults) > 1 {
-		log.Fatal("more than one vault is not allowed yet")
-	}
+	vault, err := c.queries.GetVaultById(ctx, currentVault.CurrentVaultID)
+	check(err)
 
-	vault := vaults[0]
 	salt := vault.Salt
+	label := c.args[0]
 
-	entry, err := c.queries.GetEntryByWebsite(ctx, "youtube.com")
+	entry, err := c.queries.GetEntryByLabel(ctx, label, vault.ID)
 	check(err)
 
 	cipher := utils.DecodeB64(entry.Ciphertext)

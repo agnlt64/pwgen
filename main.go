@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	c "pwgen/internal/commands"
-	"pwgen/internal/queries"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
@@ -40,8 +39,8 @@ func main() {
 
 	dbURL    := os.Getenv("DB_URL")
 	pool     := connect(context.Background(), dbURL)
-	queries  := queries.NewQueries(pool)
-	commands := c.NewCommands(queries, os.Args[2:])
+	defer pool.Close()
+	commands := c.NewCommands(pool, os.Args[2:])
 
 	subCmd := os.Args[1]
 	switch subCmd {

@@ -2,24 +2,26 @@ package commands
 
 import (
 	"context"
-	"log"
 	"fmt"
+	"log"
 	"strconv"
 
+	"pwgen/internal/db"
 	"pwgen/internal/security"
-	"pwgen/internal/queries"
 	"pwgen/internal/utils"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Commands struct {
-	queries *queries.Queries
-	args 	[]string
+	args []string
+	db   *db.Queries
 }
 
-func NewCommands(queries *queries.Queries, args []string) *Commands {
+func NewCommands(pool *pgxpool.Pool, args []string) *Commands {
 	return &Commands{
-		queries: queries,
 		args: args,
+		db:   db.New(pool),
 	}
 }
 
@@ -52,10 +54,13 @@ func (c *Commands) NewVault() {
 	ctx := context.Background()
 	salt := utils.RandString(utils.SALT_LEN)
 	displayName := c.args[0]
-	vault, err := c.queries.InsertVault(ctx, displayName, salt)
+	vault, err := c.db.InsertVault(ctx, db.InsertVaultParams{
+		DisplayName: displayName,
+		Salt:        salt,
+	})
 	check(err)
 
-	_, err = c.queries.InsertCurrentVault(ctx, vault.ID)
+	_, err = c.db.InsertCurrentVault(ctx, vault.ID)
 	check(err)
 	fmt.Printf("Vault %s created successfully! Using it as default vault.\n", displayName)
 }
@@ -67,20 +72,20 @@ func (c *Commands) UseVault() {
 
 	ctx := context.Background()
 	name := c.args[0]
-	vault, err := c.queries.GetVaultByName(ctx, name)
+	vault, err := c.db.GetVaultByName(ctx, name)
 	check(err)
 
-	_, err = c.queries.InsertCurrentVault(ctx, vault.ID)
+	_, err = c.db.InsertCurrentVault(ctx, vault.ID)
 	check(err)
 	fmt.Printf("Using vault %s as default vault.\n", vault.DisplayName)
 }
 
 func (c *Commands) ListVaults() {
 	ctx := context.Background()
-	vaults, err := c.queries.GetAllVaults(ctx)
+	vaults, err := c.db.GetAllVaults(ctx)
 	check(err)
 
-	currentVault, err := c.queries.GetCurrentVault(ctx)
+	currentVault, err := c.db.GetCurrentVault(ctx)
 	check(err)
 
 	for idx, vault := range vaults {
@@ -99,10 +104,10 @@ func (c *Commands) NewPass() {
 	}
 
 	ctx := context.Background()
-	currentVault, err := c.queries.GetCurrentVault(ctx)
+	currentVault, err := c.db.GetCurrentVault(ctx)
 	check(err)
 
-	vault, err := c.queries.GetVaultById(ctx, currentVault.CurrentVaultID)
+	vault, err := c.db.GetVaultById(ctx, currentVault.CurrentVaultID)
 	check(err)
 
 	salt := vault.Salt
@@ -121,7 +126,13 @@ func (c *Commands) NewPass() {
 	cipher, nonce, err := security.Encrypt([]byte(passwd), key)
 	check(err)
 
-	_, err = c.queries.InsertVaultEntry(ctx, utils.EncodeB64(cipher), utils.EncodeB64(nonce), url, label, vault.ID)
+	_, err = c.db.InsertVaultEntry(ctx, db.InsertVaultEntryParams{
+		Ciphertext: utils.EncodeB64(cipher),
+		Nonce:      utils.EncodeB64(nonce),
+		Website:    url,
+		Label:      label,
+		VaultID:    vault.ID,
+	})
 	check(err)
 
 	fmt.Printf("new pass for %s: %s\n", url, passwd)
@@ -133,16 +144,19 @@ func (c *Commands) GetPass() {
 	}
 
 	ctx := context.Background()
-	currentVault, err := c.queries.GetCurrentVault(ctx)
+	currentVault, err := c.db.GetCurrentVault(ctx)
 	check(err)
 
-	vault, err := c.queries.GetVaultById(ctx, currentVault.CurrentVaultID)
+	vault, err := c.db.GetVaultById(ctx, currentVault.CurrentVaultID)
 	check(err)
 
 	salt := vault.Salt
 	label := c.args[0]
 
-	entry, err := c.queries.GetEntryByLabel(ctx, label, vault.ID)
+	entry, err := c.db.GetEntryByLabel(ctx, db.GetEntryByLabelParams{
+		Label:   label,
+		VaultID: vault.ID,
+	})
 	check(err)
 
 	cipher := utils.DecodeB64(entry.Ciphertext)

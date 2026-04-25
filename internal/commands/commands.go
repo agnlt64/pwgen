@@ -89,7 +89,7 @@ func (c *Commands) ListVaults() {
 	check(err)
 
 	for idx, vault := range vaults {
-		if currentVault.CurrentVaultID == vault.ID {
+		if currentVault.ID == vault.ID {
 			fmt.Printf("[%d] %s\n", idx+1, vault.DisplayName)
 		} else {
 			fmt.Printf(" %d  %s\n", idx+1, vault.DisplayName)
@@ -104,10 +104,7 @@ func (c *Commands) NewPass() {
 	}
 
 	ctx := context.Background()
-	currentVault, err := c.db.GetCurrentVault(ctx)
-	check(err)
-
-	vault, err := c.db.GetVaultById(ctx, currentVault.CurrentVaultID)
+	vault, err := c.db.GetCurrentVault(ctx)
 	check(err)
 
 	salt := vault.Salt
@@ -144,10 +141,7 @@ func (c *Commands) GetPass() {
 	}
 
 	ctx := context.Background()
-	currentVault, err := c.db.GetCurrentVault(ctx)
-	check(err)
-
-	vault, err := c.db.GetVaultById(ctx, currentVault.CurrentVaultID)
+	vault, err := c.db.GetCurrentVault(ctx)
 	check(err)
 
 	salt := vault.Salt

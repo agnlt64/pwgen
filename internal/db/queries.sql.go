@@ -42,15 +42,20 @@ func (q *Queries) GetAllVaults(ctx context.Context) ([]Vault, error) {
 }
 
 const getCurrentVault = `-- name: GetCurrentVault :one
-select singleton, current_vault_id
-from current_vault
-limit 1
+select v.id, v.display_name, v.salt, v.created_at
+from vault v, current_vault cv
+where v.id = cv.current_vault_id
 `
 
-func (q *Queries) GetCurrentVault(ctx context.Context) (CurrentVault, error) {
+func (q *Queries) GetCurrentVault(ctx context.Context) (Vault, error) {
 	row := q.db.QueryRow(ctx, getCurrentVault)
-	var i CurrentVault
-	err := row.Scan(&i.Singleton, &i.CurrentVaultID)
+	var i Vault
+	err := row.Scan(
+		&i.ID,
+		&i.DisplayName,
+		&i.Salt,
+		&i.CreatedAt,
+	)
 	return i, err
 }
 

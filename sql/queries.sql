@@ -29,9 +29,9 @@ values ($1, $2, $3, $4, $5)
 returning *;
 
 -- name: GetCurrentVault :one
-select *
-from current_vault
-limit 1;
+select v.*
+from vault v, current_vault cv
+where v.id = cv.current_vault_id;
 
 -- name: InsertCurrentVault :one
 insert into current_vault (current_vault_id)

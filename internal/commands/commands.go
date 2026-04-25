@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"time"
 
 	"pwgen/internal/db"
 	"pwgen/internal/security"
@@ -51,7 +52,9 @@ func (c *Commands) NewVault() {
 		log.Fatal("Error: new-vault command expects a vault name")
 	}
 
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	salt := utils.RandString(utils.SALT_LEN)
 	displayName := c.args[0]
 	vault, err := c.db.InsertVault(ctx, db.InsertVaultParams{
@@ -70,7 +73,9 @@ func (c *Commands) UseVault() {
 		log.Fatal("Error: use-vault command expects a vault name")
 	}
 
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	name := c.args[0]
 	vault, err := c.db.GetVaultByName(ctx, name)
 	check(err)
@@ -81,7 +86,9 @@ func (c *Commands) UseVault() {
 }
 
 func (c *Commands) ListVaults() {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	vaults, err := c.db.GetAllVaults(ctx)
 	check(err)
 
@@ -103,7 +110,9 @@ func (c *Commands) NewPass() {
 		log.Fatalln("Error: command new-pass expects exactly 3 arguments: new-pass LENGTH WEBSITE_URL WEBSITE_LABEL")
 	}
 
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	vault, err := c.db.GetCurrentVault(ctx)
 	check(err)
 
@@ -140,7 +149,9 @@ func (c *Commands) GetPass() {
 		log.Fatalln("Error: get-pass command expects exactly 1 argument: WEBSITE_LABEL")
 	}
 
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	vault, err := c.db.GetCurrentVault(ctx)
 	check(err)
 

@@ -7,6 +7,11 @@ select *
 from vault
 where display_name = $1;
 
+-- name: GetVaultById :one
+select *
+from vault
+where id = $1;
+
 -- name: InsertVault :one
 insert into vault (display_name, salt)
 values ($1, $2)

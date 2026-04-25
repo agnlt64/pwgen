@@ -39,10 +39,19 @@ func (q *Queries) GetCurrentVault(ctx context.Context) (db.CurrentVault, error) 
 func (q *Queries) GetVaultByName(ctx context.Context, name string) (db.Vault, error) {
 	vault, err := q.db.GetVaultByName(ctx, name)
 	if err != nil {
-		return db.Vault{}, fmt.Errorf("could not get vault")
+		return db.Vault{}, fmt.Errorf("could not get vault by name")
 	}
 	return vault, nil
 }
+
+func (q *Queries) GetVaultById(ctx context.Context, id pgtype.UUID) (db.Vault, error) {
+	vault, err := q.db.GetVaultById(ctx, id)
+	if err != nil {
+		return db.Vault{}, fmt.Errorf("could not get vault by id")
+	}
+	return vault, nil
+}
+
 
 func (q *Queries) GetEntryByWebsite(ctx context.Context, website string) (db.VaultEntry, error) {
 	entry, err := q.db.GetEntryByWebsite(ctx, website)

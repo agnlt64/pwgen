@@ -76,6 +76,24 @@ func (q *Queries) GetEntryByWebsite(ctx context.Context, website string) (VaultE
 	return i, err
 }
 
+const getVaultById = `-- name: GetVaultById :one
+select id, display_name, salt, created_at
+from vault
+where id = $1
+`
+
+func (q *Queries) GetVaultById(ctx context.Context, id pgtype.UUID) (Vault, error) {
+	row := q.db.QueryRow(ctx, getVaultById, id)
+	var i Vault
+	err := row.Scan(
+		&i.ID,
+		&i.DisplayName,
+		&i.Salt,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getVaultByName = `-- name: GetVaultByName :one
 select id, display_name, salt, created_at
 from vault

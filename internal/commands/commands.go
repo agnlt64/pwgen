@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"fmt"
+	"strconv"
 
 	"pwgen/internal/security"
 	"pwgen/internal/queries"
@@ -92,30 +93,36 @@ func (c *Commands) ListVaults() {
 }
 
 func (c *Commands) NewPass() {
+	if len(c.args) != 3 {
+		// todo: make length optional
+		log.Fatalln("Error: command new-pass expects exactly 3 arguments: new-pass LENGTH WEBSITE_URL WEBSITE_LABEL")
+	}
 	ctx := context.Background()
-	vaults, err := c.queries.GetAllVaults(ctx)
+	currentVault, err := c.queries.GetCurrentVault(ctx)
 	check(err)
 
-	if len(vaults) > 1 {
-		log.Fatal("more than one vault is not allowed yet")
-	}
+	vault, err := c.queries.GetVaultById(ctx, currentVault.CurrentVaultID)
+	check(err)
 
-	vault := vaults[0]
 	salt := vault.Salt
-	master := utils.GetMasterPassword()
+	size, err := strconv.Atoi(c.args[0])
+	check(err)
 
+	// todo: proper URL parsing
+	url := c.args[1]
+	label := c.args[2]
+
+	master := utils.GetMasterPassword()
 	key := utils.Argon2id(master, salt)
-	// todo: get the size from CLI args
-	passwd := utils.RandString(10)
+
+	passwd := utils.RandString(size)
 
 	cipher, nonce, err := security.Encrypt([]byte(passwd), key)
 	check(err)
 
-	fmt.Printf("new pass: %s\n", passwd)
-	entry, err := c.queries.InsertVaultEntry(ctx, utils.EncodeB64(cipher), utils.EncodeB64(nonce), "youtube.com", "YT", vault.ID)
+	fmt.Printf("new pass for %s: %s\n", url, passwd)
+	_, err = c.queries.InsertVaultEntry(ctx, utils.EncodeB64(cipher), utils.EncodeB64(nonce), url, label, vault.ID)
 	check(err)
-
-	fmt.Printf("entry cipher: %s\n", entry.Ciphertext)
 }
 
 func (c *Commands) GetPass() {

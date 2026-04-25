@@ -38,8 +38,8 @@ func Usage() {
 	fmt.Println("    use-vault [NAME] - Use a specific vault")
 	fmt.Println("    list-vaults      - List all vaults")
 	fmt.Println("")
-	fmt.Println("    new-pass [WEBSITE] - Create a new password (TODO: support website)")
-	fmt.Println("    get-pass [WEBSITE] - Get the password for given WEBSITE (TODO: support website)")
+	fmt.Println("    new-pass [SIZE] [URL] [LABEL] - Create a new password")
+	fmt.Println("    get-pass [LABEL] 			   - Get the password for website associated with LABEL")
 	fmt.Println("")
 	fmt.Println("    help - Print this help message")
 }
@@ -97,6 +97,7 @@ func (c *Commands) NewPass() {
 		// todo: make length optional
 		log.Fatalln("Error: command new-pass expects exactly 3 arguments: new-pass LENGTH WEBSITE_URL WEBSITE_LABEL")
 	}
+
 	ctx := context.Background()
 	currentVault, err := c.queries.GetCurrentVault(ctx)
 	check(err)
@@ -120,15 +121,17 @@ func (c *Commands) NewPass() {
 	cipher, nonce, err := security.Encrypt([]byte(passwd), key)
 	check(err)
 
-	fmt.Printf("new pass for %s: %s\n", url, passwd)
 	_, err = c.queries.InsertVaultEntry(ctx, utils.EncodeB64(cipher), utils.EncodeB64(nonce), url, label, vault.ID)
 	check(err)
+
+	fmt.Printf("new pass for %s: %s\n", url, passwd)
 }
 
 func (c *Commands) GetPass() {
 	if len(c.args) != 1 {
 		log.Fatalln("Error: get-pass command expects exactly 1 argument: WEBSITE_LABEL")
 	}
+
 	ctx := context.Background()
 	currentVault, err := c.queries.GetCurrentVault(ctx)
 	check(err)
@@ -147,7 +150,7 @@ func (c *Commands) GetPass() {
 
 	master := utils.GetMasterPassword()
 	key := utils.Argon2id(master, salt)
-	plain, err := security.Decrypt([]byte(cipher), []byte(nonce), key)
+	plain, err := security.Decrypt(cipher, nonce, key)
 	check(err)
 
 	fmt.Printf("decrypted: %s\n", plain)

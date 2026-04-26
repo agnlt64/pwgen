@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"bufio"
+	// "bufio"
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
@@ -10,6 +10,7 @@ import (
 	"os"
 
 	"golang.org/x/crypto/argon2"
+	"golang.org/x/term"
 )
 
 // from Python's string.printable
@@ -21,14 +22,13 @@ const (
 )
 
 func GetMasterPassword() string {
-	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("Enter master password: ")
-	master, err := reader.ReadString('\n')
+	bytes, err := term.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	return master
+	fmt.Println()
+	return string(bytes)
 }
 
 func RandString(size int) string {

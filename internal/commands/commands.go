@@ -6,6 +6,7 @@ import (
 	"log"
 	"strconv"
 	"time"
+	"os"
 
 	"pwgen/internal/db"
 	"pwgen/internal/security"
@@ -26,9 +27,10 @@ func NewCommands(pool *pgxpool.Pool, args []string) *Commands {
 	}
 }
 
-func check(err error) {
+func checkf(err error, msg string) {
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf("%s: %v\n", msg, err.Error())
+		os.Exit(1)
 	}
 }
 
@@ -61,10 +63,11 @@ func (c *Commands) NewVault() {
 		DisplayName: displayName,
 		Salt:        salt,
 	})
-	check(err)
+	checkf(err, "couldn't insert vault")
 
 	_, err = c.db.InsertCurrentVault(ctx, vault.ID)
-	check(err)
+	checkf(err, "couldn't insert current vault")
+
 	fmt.Printf("Vault %s created successfully! Using it as default vault.\n", displayName)
 }
 
@@ -78,10 +81,11 @@ func (c *Commands) UseVault() {
 
 	name := c.args[0]
 	vault, err := c.db.GetVaultByName(ctx, name)
-	check(err)
+	checkf(err, "couldn't get vault by name")
 
 	_, err = c.db.InsertCurrentVault(ctx, vault.ID)
-	check(err)
+	checkf(err, "couldn't insert current vault")
+
 	fmt.Printf("Using vault %s as default vault.\n", vault.DisplayName)
 }
 
@@ -90,10 +94,10 @@ func (c *Commands) ListVaults() {
 	defer cancel()
 
 	vaults, err := c.db.GetAllVaults(ctx)
-	check(err)
+	checkf(err, "couldn't get all vaults")
 
 	currentVault, err := c.db.GetCurrentVault(ctx)
-	check(err)
+	checkf(err, "couldn't insert current vault")
 
 	for idx, vault := range vaults {
 		if currentVault.ID == vault.ID {
@@ -106,7 +110,7 @@ func (c *Commands) ListVaults() {
 
 func (c *Commands) NewPass() {
 	if len(c.args) != 3 {
-		// todo: make length optional
+		// TODO: make length optional
 		log.Fatalln("Error: command new-pass expects exactly 3 arguments: new-pass LENGTH WEBSITE_URL WEBSITE_LABEL")
 	}
 
@@ -114,13 +118,13 @@ func (c *Commands) NewPass() {
 	defer cancel()
 
 	vault, err := c.db.GetCurrentVault(ctx)
-	check(err)
+	checkf(err, "couldn't get current vault")
 
 	salt := vault.Salt
 	size, err := strconv.Atoi(c.args[0])
-	check(err)
+	checkf(err, "invalid size value")
 
-	// todo: proper URL parsing
+	// TODO: proper URL parsing
 	url := c.args[1]
 	label := c.args[2]
 
@@ -130,7 +134,7 @@ func (c *Commands) NewPass() {
 	passwd := utils.RandString(size)
 
 	cipher, nonce, err := security.Encrypt([]byte(passwd), key)
-	check(err)
+	checkf(err, "couldn't encrypt password")
 
 	_, err = c.db.InsertVaultEntry(ctx, db.InsertVaultEntryParams{
 		Ciphertext: utils.EncodeB64(cipher),
@@ -139,7 +143,7 @@ func (c *Commands) NewPass() {
 		Label:      label,
 		VaultID:    vault.ID,
 	})
-	check(err)
+	checkf(err, "couldn't save password")
 
 	fmt.Printf("new pass for %s: %s\n", url, passwd)
 }
@@ -153,7 +157,7 @@ func (c *Commands) GetPass() {
 	defer cancel()
 
 	vault, err := c.db.GetCurrentVault(ctx)
-	check(err)
+	checkf(err, "couldnt' get current vault")
 
 	salt := vault.Salt
 	label := c.args[0]
@@ -162,15 +166,18 @@ func (c *Commands) GetPass() {
 		Label:   label,
 		VaultID: vault.ID,
 	})
-	check(err)
+	checkf(err, "invalid label")
 
-	cipher := utils.DecodeB64(entry.Ciphertext)
-	nonce := utils.DecodeB64(entry.Nonce)
+	cipher, err := utils.DecodeB64(entry.Ciphertext)
+	checkf(err, "couldn't decode base64 literal")
+
+	nonce, err := utils.DecodeB64(entry.Nonce)
+	checkf(err, "couldn't decode base64 literal")
 
 	master := utils.GetMasterPassword()
 	key := utils.Argon2id(master, salt)
 	plain, err := security.Decrypt(cipher, nonce, key)
-	check(err)
+	checkf(err, "invalid password")
 
 	fmt.Printf("decrypted: %s\n", plain)
 }

@@ -34,8 +34,11 @@ func GetMasterPassword() string {
 func RandString(size int) string {
 	b := make([]rune, size)
 	for i := range b {
+		idx, err := rand.Int(rand.Reader, big.NewInt(int64(len(PRINTABLE))))
 		// can't crash with rand.Reader according to doc
-		idx, _ := rand.Int(rand.Reader, big.NewInt(int64(len(PRINTABLE))))
+		if err != nil {
+			panic(err)
+		}
 		b[i] = PRINTABLE[idx.Int64()]
 	}
 	return string(b)
@@ -50,10 +53,6 @@ func EncodeB64(text []byte) string {
 	return base64.StdEncoding.EncodeToString(text)
 }
 
-func DecodeB64(text string) []byte {
-	val, err := base64.StdEncoding.DecodeString(text)
-	if err != nil {
-		log.Fatal("could not decode base64 string")
-	}
-	return val
+func DecodeB64(text string) ([]byte, error) {
+	return base64.StdEncoding.DecodeString(text)
 }

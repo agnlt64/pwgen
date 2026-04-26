@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 	"time"
-	"os"
 
 	"pwgen/internal/db"
 	"pwgen/internal/security"

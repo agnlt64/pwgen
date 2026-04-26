@@ -1,7 +1,6 @@
 package utils
 
 import (
-	// "bufio"
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
@@ -17,7 +16,7 @@ import (
 var PRINTABLE = []rune("0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ ")
 
 const (
-	MAX_CPU = 8
+	MAX_CPU  = 8
 	SALT_LEN = 16
 )
 
@@ -35,9 +34,9 @@ func RandString(size int) string {
 	b := make([]rune, size)
 	for i := range b {
 		idx, err := rand.Int(rand.Reader, big.NewInt(int64(len(PRINTABLE))))
-		// can't crash with rand.Reader according to doc
 		if err != nil {
-			panic(err)
+			// can't crash with rand.Reader according to doc
+			panic("unreachable")
 		}
 		b[i] = PRINTABLE[idx.Int64()]
 	}

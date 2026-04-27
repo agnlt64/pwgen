@@ -12,6 +12,7 @@ import (
 	"pwgen/internal/security"
 	"pwgen/internal/utils"
 
+	"github.com/atotto/clipboard"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -145,7 +146,10 @@ func (c *Commands) NewPass() {
 	})
 	checkf(err, "couldn't save password")
 
-	fmt.Printf("new pass for %s: %s\n", url, passwd)
+	err = clipboard.WriteAll(passwd)
+	checkf(err, "couldn't write password to clipboard")
+
+	fmt.Printf("New password for %s was written to clipboard\n", label)
 }
 
 func (c *Commands) GetPass() {
@@ -179,5 +183,8 @@ func (c *Commands) GetPass() {
 	plain, err := security.Decrypt(cipher, nonce, key)
 	checkf(err, "invalid password")
 
-	fmt.Printf("decrypted: %s\n", plain)
+	err = clipboard.WriteAll(string(plain))
+	checkf(err, "couldn't write password to clipboard")
+
+	fmt.Printf("Password for %s was written to clipboard\n", label)
 }

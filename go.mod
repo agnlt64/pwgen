@@ -17,3 +17,5 @@ require (
 	golang.org/x/term v0.42.0 // direct
 	golang.org/x/text v0.29.0 // indirect
 )
+
+require github.com/atotto/clipboard v0.1.4 // indirect

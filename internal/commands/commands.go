@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"time"
 
 	"pwgen/internal/db"
@@ -13,20 +12,8 @@ import (
 	"pwgen/internal/utils"
 
 	"github.com/atotto/clipboard"
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/spf13/cobra"
 )
-
-type Commands struct {
-	args []string
-	db   *db.Queries
-}
-
-func NewCommands(pool *pgxpool.Pool, args []string) *Commands {
-	return &Commands{
-		args: args,
-		db:   db.New(pool),
-	}
-}
 
 func checkf(err error, msg string) {
 	if err != nil {
@@ -35,69 +22,50 @@ func checkf(err error, msg string) {
 	}
 }
 
-func Usage() {
-	// TODO: move to actual subcommands, e.g
-	// vault [new|list|use]
-	// vault new [name], vault use [name], vault list
-	fmt.Println("Usage:")
-	fmt.Println("    new-vault [NAME] - Create a new vault")
-	fmt.Println("    use-vault [NAME] - Use a specific vault")
-	fmt.Println("    list-vaults      - List all vaults")
-	fmt.Println("")
-	fmt.Println("    new-pass [SIZE] [URL] [LABEL] - Create a new password")
-	fmt.Println("    get-pass [LABEL] 			   - Get the password for website associated with LABEL")
-	fmt.Println("")
-	fmt.Println("    help - Print this help message")
-}
-
-func (c *Commands) NewVault() {
-	if len(c.args) != 1 {
-		log.Fatal("Error: new-vault command expects a vault name")
-	}
-
+func NewVault(queries *db.Queries, cmd *cobra.Command, args []string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	salt := utils.RandString(utils.SALT_LEN)
-	displayName := c.args[0]
-	vault, err := c.db.InsertVault(ctx, db.InsertVaultParams{
+	displayName := args[0]
+	vault, err := queries.InsertVault(ctx, db.InsertVaultParams{
 		DisplayName: displayName,
 		Salt:        salt,
 	})
 	checkf(err, "couldn't insert vault")
 
-	_, err = c.db.InsertCurrentVault(ctx, vault.ID)
+	_, err = queries.InsertCurrentVault(ctx, vault.ID)
 	checkf(err, "couldn't insert current vault")
 
 	fmt.Printf("Vault %s created successfully! Using it as default vault.\n", displayName)
 }
 
-func (c *Commands) UseVault() {
-	if len(c.args) != 1 {
+func UseVault(queries *db.Queries, cmd *cobra.Command, args []string) {
+	if len(args) != 1 {
 		log.Fatal("Error: use-vault command expects a vault name")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	name := c.args[0]
-	vault, err := c.db.GetVaultByName(ctx, name)
+	name := args[0]
+	vault, err := queries.GetVaultByName(ctx, name)
 	checkf(err, "couldn't get vault by name")
 
-	_, err = c.db.InsertCurrentVault(ctx, vault.ID)
+	_, err = queries.InsertCurrentVault(ctx, vault.ID)
 	checkf(err, "couldn't insert current vault")
 
 	fmt.Printf("Using vault %s as default vault.\n", vault.DisplayName)
 }
 
-func (c *Commands) ListVaults() {
+func ListVaults(queries *db.Queries, cmd *cobra.Command, args []string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	vaults, err := c.db.GetAllVaults(ctx)
+	vaults, err := queries.GetAllVaults(ctx)
 	checkf(err, "couldn't get all vaults")
 
-	currentVault, err := c.db.GetCurrentVault(ctx)
+	currentVault, err := queries.GetCurrentVault(ctx)
 	checkf(err, "couldn't insert current vault")
 
 	for idx, vault := range vaults {
@@ -109,35 +77,29 @@ func (c *Commands) ListVaults() {
 	}
 }
 
-func (c *Commands) NewPass() {
-	if len(c.args) != 3 {
-		// TODO: make length optional
-		log.Fatalln("Error: command new-pass expects exactly 3 arguments: new-pass LENGTH WEBSITE_URL WEBSITE_LABEL")
-	}
-
+func NewPass(queries *db.Queries, cmd *cobra.Command, args []string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	vault, err := c.db.GetCurrentVault(ctx)
+	vault, err := queries.GetCurrentVault(ctx)
 	checkf(err, "couldn't get current vault")
 
 	salt := vault.Salt
-	size, err := strconv.Atoi(c.args[0])
-	checkf(err, "invalid size value")
+	length, _ := cmd.Flags().GetInt("length")
 
 	// TODO: proper URL parsing
-	url := c.args[1]
-	label := c.args[2]
+	url := args[0]
+	label := args[1]
 
 	master := utils.GetMasterPassword()
 	key := utils.Argon2id(master, salt)
 
-	passwd := utils.RandString(size)
+	passwd := utils.RandString(length)
 
 	cipher, nonce, err := security.Encrypt([]byte(passwd), key)
 	checkf(err, "couldn't encrypt password")
 
-	_, err = c.db.InsertVaultEntry(ctx, db.InsertVaultEntryParams{
+	_, err = queries.InsertVaultEntry(ctx, db.InsertVaultEntryParams{
 		Ciphertext: utils.EncodeB64(cipher),
 		Nonce:      utils.EncodeB64(nonce),
 		Website:    url,
@@ -152,21 +114,17 @@ func (c *Commands) NewPass() {
 	fmt.Printf("New password for %s was written to clipboard\n", label)
 }
 
-func (c *Commands) GetPass() {
-	if len(c.args) != 1 {
-		log.Fatalln("Error: get-pass command expects exactly 1 argument: WEBSITE_LABEL")
-	}
-
+func GetPass(queries *db.Queries, cmd *cobra.Command, args []string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	vault, err := c.db.GetCurrentVault(ctx)
+	vault, err := queries.GetCurrentVault(ctx)
 	checkf(err, "couldnt' get current vault")
 
 	salt := vault.Salt
-	label := c.args[0]
+	label := args[0]
 
-	entry, err := c.db.GetEntryByLabel(ctx, db.GetEntryByLabelParams{
+	entry, err := queries.GetEntryByLabel(ctx, db.GetEntryByLabelParams{
 		Label:   label,
 		VaultID: vault.ID,
 	})

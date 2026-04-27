@@ -9,22 +9,37 @@ $ go build .
 ```
 
 ## Usage
+
+### Vaults
+
 Create a vault:
 ```console
-$ ./pwgen new-vault VaultName
+$ ./pwgen vault new VaultName
+```
+
+Switch to a vault:
+```console
+$ ./pwgen vault use VaultName
 ```
 
 List all vaults:
 ```console
-$ ./pwgen list-vaults
+$ ./pwgen vault list
 ```
 
-Create a 10-chars password for a specific website:
+### Passwords
+
+Create a password for a website:
 ```console
-$ ./pwgen new-pass 10 https://website.com website
+$ ./pwgen pass new https://website.com label
 ```
 
-Get a password for a given website (website label, not the URL):
+Use `--length` to set the password length (default: 25):
 ```console
-$ ./pwgen get-pass website
+$ ./pwgen pass new https://website.com label --length 16
+```
+
+Get a password (copied to clipboard):
+```console
+$ ./pwgen pass get label
 ```
